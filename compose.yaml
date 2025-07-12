@@ -1,0 +1,49 @@
+name: $PROJ-$ENV-$ENV_UNIT
+services:
+  api-gateway:
+    image: $PROJ-$APP:$VERSION-$ENV
+    entrypoint: "/usr/local/bin/supervisord"
+    command: ["-c", "/etc/supervisord.conf"]
+    depends_on:
+      - auth
+      - account
+      - cdn
+    ports:
+      - 80:80
+    configs:
+      - source: api-gateway-supervisord_conf
+        target: /etc/supervisord.conf
+      - source: api-gateway-nginx_conf
+        target: /etc/nginx/nginx.conf
+    volumes:
+      - api-gateway-log:/opt/nginx/log
+    networks:
+      api-gateway-subnet:
+        ipv4_address: ${API_GATEWAY_NODE_01_IP}
+      cdn-external-subnet:
+      auth-exteranal-subnet:
+      account-external-subnet:
+configs:
+  api-gateway-supervisord_conf:
+    file: ./config/supervisord.conf
+  api-gateway-nginx_conf:
+    file: ./config/nginx.conf
+volumes:
+  api-gateway-log:
+    driver: local
+networks:
+  api-gateway-subnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${API_GATEWAY_SUBNET_IP_RANGES}
+  cdn-external-subnet:
+    name: $PROJ-$ENV-${ENV_UNIT}_cdn-subnet
+    external: true
+  auth-exteranal-subnet:
+    name: $PROJ-$ENV-${ENV_UNIT}_auth-subnet
+    external: true
+  account-external-subnet:
+    name: $PROJ-$ENV-${ENV_UNIT}_account-subnet
+    external: true
